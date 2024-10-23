@@ -1,0 +1,60 @@
+on:
+  push:
+    branches:
+      - master
+
+name: JS release
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 'Setup NodeJS 20.x'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: 'Get version from package.json'
+        run: |
+          VERSION=$(jq -r '.version' package.json)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "TAG_NAME=js/$VERSION" >> $GITHUB_ENV
+
+      - name: 'Get release notes'
+        run: |
+          NOTES=$(awk '/## \['${{ env.VERSION }}'\]/{flag=1;next}/## \[/{flag=0} flag' ./js/CHANGELOG.md)
+          echo "RELEASE_NOTES=$NOTES" >> $GITHUB_ENV
+
+      # - name: 'Archive source code (TAR.GZ)'
+      #   id: archive_tar
+      #   run: |
+      #     mkdir .temp
+      #     rsync -av --exclude='.git' --exclude='net' --exclude='.github' ./ .temp/
+      #     tar -czvf src_code_${{ env.VERSION }}.tar.gz -C .temp .
+      #     echo ::set-output name=tar::src_code_${{ env.VERSION }}.tar.gz
+
+      # # tar --exclude='.git' --exclude='net' --exclude='.github' --exclude='*.tar.gz' -czvf src_code_${{ env.VERSION }}.tar.gz
+      # - name: 'Archive source code (ZIP)'
+      #   id: archive_zip
+      #   run: |
+      #     zip -r src_code_${{ env.VERSION }}.zip . -x ".git/*" -x ".github/*" -x "net/*" -x "Sails.Net.sln" -x "*.tar.gz"
+      #     echo ::set-output name=zip::src_code_${{ env.VERSION }}.zip
+
+      - name: 'Create new tag'
+        run: |
+          git tag ${{ env.TAG_NAME }}
+          git push origin ${{ env.TAG_NAME }}
+
+      - name: 'Create Release'
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ env.RELEASE_NOTES }}
+          # files: |
+          # ${{ steps.archive_zip.outputs.zip }}
+          # ${{ steps.archive_tar.outputs.tar }}
+          tag_name: ${{ env.TAG_NAME }}
