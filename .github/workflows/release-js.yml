@@ -27,7 +27,7 @@ jobs:
       - name: 'Get release notes'
         id: release_notes
         run: |
-          echo ::set-output name=value::$(awk '/## ${{ env.VERSION }}/{flag=1;next}/---/{flag=0} flag' ./js/CHANGELOG.md)
+          echo ::set-output name=value::"$(awk '/## ${{ env.VERSION }}/{flag=1;next}/---/{flag=0} flag' ./js/CHANGELOG.md)"
 
       - name: 'Create new tag'
         run: |
