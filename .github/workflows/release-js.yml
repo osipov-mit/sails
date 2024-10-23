@@ -27,7 +27,7 @@ jobs:
       - name: 'Get release notes'
         id: release_notes
         run: |
-          RELEASE_NOTES="$(awk '/## ${{ env.VERSION }}/{flag=1;next}/---/{flag=0} flag' ./js/CHANGELOG.md)"
+          RELEASE_NOTES="$(awk '/## ${{ env.VERSION }}/{flag=1;next}/---/{flag=0} flag' ./js/CHANGELOG.md | tr '\n' '%0A')"
           echo "RELEASE_NOTES=$RELEASE_NOTES" >> $GITHUB_ENV
 
       - name: 'Create new tag'
